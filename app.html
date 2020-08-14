@@ -142,7 +142,7 @@
 
 .mybutton {
   font-family: StarJedi;
-  font-size: 130%;
+  font-size: 110%;
   line-height: 0.8;
   background: #101040;
   color: #FFFFFF;
@@ -447,7 +447,7 @@ function from16bitcolor(val) {
 
 function to16bitlinear(val) {
   val = parseInt(val, 16);
-  val = Math.round(Math.pow(val / 255.0, 1.0 / 2.2) * 65536);
+  val = Math.round(Math.pow(val / 255.0, 1.0 / 2.2) * 65535);
   return val;
 }
 
@@ -1006,6 +1006,17 @@ async function RunUSB() {
   }
 }    
 
+async function RunSerial() {
+
+  
+  //usb_device.transferOut(endpointOut,
+  //  new TextEncoder('utf-8').encode("\n\n"));  
+  Run2();
+  while (true) {
+    var data = await usb_device.transferIn(endpointIn, 64);
+    OnData(data.data);
+  }
+}    
 
 var loop_running = false;
 async function DoRunLoop() {
@@ -1121,6 +1132,10 @@ function Init() {
     document.getElementById('connect_ble').style.visibility='visible';
     err = false;
   }
+  if (true) {
+    document.getElementById('connect_serial').style.visibility='visible';
+    err = false;
+  }
   if (err) {
     document.getElementById('EMSG').innerHTML = "This browser supports neither webusb nor web bluetooth.";
   }
@@ -1129,14 +1144,17 @@ function Init() {
 </script>
 <span class=pwbox id=while_disconnected>
   <div id=connect_usb style='visibility:hidden;' class=control>
-     <button class=mybutton type=button onclick='RunUSB()'>usb</button><br>
+     <button class=mybutton type=button onclick='RunUSB()'>web usb</button><br>
   </div>
   <div id=connect_ble style='visibility:hidden;'>
     <span id=pwspan style='display:none'>Password:&nbsp;<input class=pwinput type=password id=password onkeydown="if (event.keyCode == 13) Run();"></span>
     <div class=control>
-      <button class=mybutton type=button onclick='Run()'>BLE</button>
+      <button class=mybutton type=button onclick='Run()'>web ble</button>
     </div>
     <br>
+  </div>
+  <div id=connect_serial style='visibility:hidden;' class=control>
+     <button class=mybutton type=button onclick='RunSerial()'>serial</button><br>
   </div>
   <div id=EMSG></div>
 </span>
@@ -1213,6 +1231,12 @@ function Init() {
     </div>
     <div class=control>
        <span class=title onclick='Send("drag");'>drag</span>
+    </div>
+    <div class=control>
+       <span class=title onclick='Send("melt");'>melt</span>
+    </div>
+    <div class=control>
+       <span class=title onclick='Send("lblock");'>lightning</span>
     </div>
     <div class=control>
        <span class=title onclick='Send("stop_track");'>stop track</span>

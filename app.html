@@ -539,6 +539,8 @@ function SaveStyle(blade) {
   ret = ret.join(" ");
   presets[current_preset_num]["STYLE"+blade] = ret;
   Send("set_style"+blade+ " " + ret);
+  SetPreset(current_preset_num) //to make sure it takes emediate effect
+
 }
 
 function SaveName() {
@@ -556,12 +558,32 @@ function make_name_field(value) {
   return "<div class=edit><span class=title>name<br><input type=text class=myinput id=name_input value='"+value+"' onchange='SaveName()'></span></div>\n";
 }
 
+
+function SaveVariation() {
+  var variation_input = document.getElementById('variation_input');
+  console.log("SAVE VARIATION " + variation_input.value);
+  if (presets[current_preset_num].VARIATION != variation_input.value) {
+    presets[current_preset_num].VARIATION = variation_input.value;
+    Send("variation " + variation_input.value);
+  }
+  const preset_tags = document.getElementsByClassName('preset');
+  //	SetPreset(current_preset_num) //no need, variation is always updates directly
+  UpdatePresets();  
+}
+
+
+function make_variation_field(value) {
+  return "<div class=edit><span class=title>variation<br><input type=range min=0 max=32767 class=myinput id=variation_input value='"+value+"' onchange='SaveVariation()'></span></div>\n";
+}
+
+
 function SaveFont() {
   var font_select = document.getElementById('font_select');
   console.log("SAVE FONT " + font_select.value);
   if (presets[current_preset_num].FONT != font_select.value) {
     presets[current_preset_num].FONT = font_select.value;
     Send("set_font " + font_select.value);
+	SetPreset(current_preset_num) //to make sure it takes emediate effect
   }
 }
 
@@ -578,6 +600,7 @@ function SaveTrack() {
   if (presets[current_preset_num].TRACK != track_select.value) {
     presets[current_preset_num].TRACK = track_select.value;
     Send("set_track " + track_select.value);
+	SetPreset(current_preset_num) //to make sure it takes emediate effect
   }
 }
 
@@ -598,6 +621,7 @@ function updateEditPane(preset) {
     tmp += make_style_field(blade , presets[preset]["STYLE" + blade]);
   }
   var edit_pane = document.getElementById('edit_pane2');
+  tmp += make_variation_field(presets[preset].VARIATION);
   console.log(edit_pane);  
   edit_pane.innerHTML = tmp;
 }
@@ -921,6 +945,7 @@ async function Run2() {
   document.getElementById('while_disconnected').style.visibility='hidden';  
   document.getElementById('connect_usb').style.visibility='hidden';
   document.getElementById('connect_ble').style.visibility='hidden';
+  document.getElementById('connect_serial').style.visibility='hidden';
 
   var preset;
   var preset_string;

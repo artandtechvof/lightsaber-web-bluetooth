@@ -1,0 +1,27 @@
+{
+  "name": "@serialport/terminal",
+  "version": "9.0.1",
+  "main": "lib",
+  "bin": {
+    "serialport-terminal": "./serial_app.js"
+  },
+  "dependencies": {
+    "@serialport/bindings": "^9.0.1",
+    "@serialport/stream": "^9.0.1",
+    "commander": "^5.1.0",
+    "enquirer": "^2.3.5",
+    "queue-fifo": "^0.2.6",
+    "socket.io-client": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=8.6.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/serialport/node-serialport.git"
+  }
+}

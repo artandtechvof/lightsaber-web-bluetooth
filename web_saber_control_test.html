@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+ 
+  <head>
+       
+        <title>Web Saber Control</title>
+        <meta name="viewport" content="width=400px" />
+       
+        <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+        <link rel="stylesheet" href="style.css">
+		
+  </head>
+
+  <body onbeforeunload="return myFunction()>
+	     
+	    <textarea id="statusbox" name="status" rows="4" cols="50">
+				status
+		</textarea> 
+	 
+       <p>Move Slider to Change Volume</p> <input type="range" id= "inputSlider"  min="0" max="3000" value="50" step="1" oninput="showValue(this.value)" />
+       
+        <br><br><span id="outputText">50</span>
+
+       <p>Move Slider to Change Variation</p> <input type="range" id= "inputSlider2"  min="0" max="32767" value="50" step="1" oninput="showValue2(this.value)" />
+       
+        <br><br><span id="outputText2">50</span>
+		
+		<br><br><button onclick="saberOn()">On</button>
+
+		<br><br><button onclick="saberOff()">Off</button>
+
+		<br><br><button onclick="saberStatus()">status</button>
+
+        <script type="text/javascript">
+		        
+				var socket = io.connect('ws://localhost:8080');
+                //var socket = io.connect();
+               
+                socket.on('led', function (data) {
+                        document.getElementById("statusbox").value = data;
+                        document.getElementById("outputText").innerHTML = data.value;
+                });
+
+                socket.on('status', function (data) {
+                        document.getElementById("statusbox").value = data;
+                });
+
+                socket.on('var', function (data) {
+                        document.getElementById("inputSlider2").value = data.value;
+                        document.getElementById("outputText2").innerHTML = data.value;
+                });
+
+                function showValue(newValue)
+                {
+                        document.getElementById("outputText").innerHTML=newValue;
+                        socket.send(("set_volume " + String(newValue))); //alias for socket.emit('message','set_volume ', { value: newValue })
+                }
+
+ 
+				function showValue2(newValue)
+                {
+                        document.getElementById("outputText2").innerHTML=newValue;
+                        socket.send(("var " + String(newValue))); //alias for socket.emit('message','set_volume ', { value: newValue })
+                }
+
+                function saberOn(newValue)
+                {
+                        socket.send('on'); //alias for socket.emit('message','set_volume ', { value: newValue })
+                }
+
+                function saberOff(newValue)
+                {
+                        socket.send('off'); //alias for socket.emit('message','set_volume ', { value: newValue })
+                }
+
+                function saberStatus(newValue)
+                {
+                        socket.emit('status',''); //alias for socket.emit('message','set_volume ', { value: newValue })
+                }
+
+
+                var myVar = setInterval(statusTimer, 2500);
+
+
+				function myFunction() {
+                  socket.emit('closing','')
+				  event.returnValue = "Write something clever here..";
+				};
+
+
+        </script>
+
+    
+        <script type="text/javascript">
+        </script>
+  </body>
+</html>

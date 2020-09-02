@@ -631,6 +631,21 @@ function make_variation_field(value) {
   return ret;
 }
 
+function SaveBrightness() {
+  var font_select = document.getElementById('brightness_slider');
+  console.log("SAVE BRIGHTNESS " + brightness_slider.value);
+  brightness_ = brightness_slider.value;
+  Send("dim " + brightness_slider.value);
+}
+
+var brightness_ =100;
+
+function make_brightness_field(value) {
+  var ret = "<div class=edit>";
+  ret += "<span class=title>brightness<br><input type=range min=0 max=100 class=slider id=brightness_slider value='"+value+"' onchange='SaveBrightness()'>";
+  ret += "</span></span></div>\n"; 
+  return ret;
+}
 
 function SaveFont() {
   var font_select = document.getElementById('font_select');
@@ -678,10 +693,11 @@ function updateEditPane(preset) {
   }
   var edit_pane = document.getElementById('edit_pane2');
   tmp += make_variation_field(presets[preset].VARIATION);
+  tmp += make_brightness_field(brightness_);
   console.log(edit_pane);  
   edit_pane.innerHTML = tmp;
 }
-
+make_brightness_field
 var current_preset_num = -1;
 function showCurrentPreset(preset) {
   preset = parseInt(preset);
@@ -755,9 +771,12 @@ async function DropEvent(n) {
 }
 
 async function AddPreset() {
-  Send("duplicate_preset " + presets.length);
-  presets.push(Object.assign({}, presets[current_preset_num]));
-  UpdatePresets();
+  var r = confirm("Duplicate current preset?");
+  if (r == true) {
+	  Send("duplicate_preset " + presets.length);
+	  presets.push(Object.assign({}, presets[current_preset_num]));
+	  UpdatePresets();
+  }
 }
 
 async function DelPreset() {
@@ -770,6 +789,13 @@ async function DelPreset() {
     SetPreset(0);
   }
   UpdatePresets();
+}
+
+async function DelConfirm() {
+  var r = confirm("Delete current preset?");
+  if (r == true) {
+    DelPreset();
+  } 
 }
 
 async function PlayTrack(track) {
@@ -953,7 +979,7 @@ function UpdatePresets() {
     preset_string += "<div class=preset onclick='AddPreset()'>";
     preset_string += "<span class=title2>+</span>";
     preset_string += "</div>";
-    preset_string += "<div class=preset ondrop='DelPreset()'>";
+    preset_string += "<div class=preset ondrop='DelPreset()' onclick=DelConfirm()>";
     preset_string += "<span class=title2>&#x1F5D1;</span>";
     preset_string += "</div>";
   }
@@ -1318,10 +1344,10 @@ function Init() {
     document.getElementById('connect_ble').style.visibility='visible';
     err = false;
   }
-  if (true) {
-    document.getElementById('connect_serial').style.visibility='visible';
-    err = false;
-  }
+  //if (true) {
+  //  document.getElementById('connect_serial').style.visibility='visible';
+  //  err = false;
+  //}
   if (err) {
     document.getElementById('EMSG').innerHTML = "This browser supports neither webusb nor web bluetooth.";
   }

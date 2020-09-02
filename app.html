@@ -266,7 +266,6 @@ input[type="color"].custom {
 <meta name="msapplication-TileImage" content="icon.png">
 <meta name="msapplication-TileColor" content="#2F3BA2">
 <meta name=viewport content='width=850'>
-<script src="http://localhost:8080/socket.io/socket.io.js"></script>
 </head>
 <body onload='Init();'>
 
@@ -307,10 +306,6 @@ var style_lines;
 var named_styles = {};
 var tracks_listed = false;
 
-//socket vars
-var socket;
-var connected_serial = false;
-
 function SendNext() {
   if (!current_packet) {
     if (!send_buf.length) {
@@ -342,7 +337,7 @@ function Die(e) {
 
 function OnData(data) {
   data = new TextDecoder().decode(data);
-   console.log("GOT DATA: " + data);
+  console.log("GOT DATA: " + data);
   buffer += data;
   var tmp = buffer.split("-+=END_OUTPUT=+-");
   if (tmp.length > 1) {
@@ -390,12 +385,6 @@ function RunWatchDog() {
 }
 
 function Send(cmd) {
-  
-  if (connected_serial){
-      SocketSend(cmd);
-	  return;
-	}
-  
   var data = new TextEncoder('utf-8').encode(cmd + '\n');
   // console.log(usb_device);
   if (usb_device) {
@@ -579,7 +568,6 @@ function SaveStyle(blade) {
   presets[current_preset_num]["STYLE"+blade] = ret;
   Send("set_style"+blade+ " " + ret);
   SetPreset(current_preset_num) //to make sure it takes emediate effect
-
 }
 
 function SaveName() {
@@ -650,7 +638,6 @@ function make_brightness_field(value) {
 function SaveFont() {
   var font_select = document.getElementById('font_select');
   console.log("SAVE FONT " + font_select.value);
-  var banaan = font_select.value.split(";");
   if (presets[current_preset_num].FONT != font_select.value) {
     presets[current_preset_num].FONT = font_select.value;
     Send("set_font " + font_select.value);
@@ -697,7 +684,7 @@ function updateEditPane(preset) {
   console.log(edit_pane);  
   edit_pane.innerHTML = tmp;
 }
-make_brightness_field
+
 var current_preset_num = -1;
 function showCurrentPreset(preset) {
   preset = parseInt(preset);
@@ -773,10 +760,10 @@ async function DropEvent(n) {
 async function AddPreset() {
   var r = confirm("Duplicate current preset?");
   if (r == true) {
-	  Send("duplicate_preset " + presets.length);
-	  presets.push(Object.assign({}, presets[current_preset_num]));
-	  UpdatePresets();
-  }
+  Send("duplicate_preset " + presets.length);
+  presets.push(Object.assign({}, presets[current_preset_num]));
+  UpdatePresets();
+  }   
 }
 
 async function DelPreset() {
@@ -1028,7 +1015,6 @@ async function Run2() {
   document.getElementById('while_disconnected').style.visibility='hidden';  
   document.getElementById('connect_usb').style.visibility='hidden';
   document.getElementById('connect_ble').style.visibility='hidden';
-  document.getElementById('connect_serial').style.visibility='hidden';
 
   var preset;
   var preset_string;
@@ -1056,7 +1042,7 @@ async function Run2() {
   DoRunLoop()
 }
 
-//WebUSB
+//WebUSB		
 async function RunUSB() {
   document.getElementById('EMSG').innerHTML = '';
   var filters = [
@@ -1114,112 +1100,6 @@ async function RunUSB() {
     OnData(data.data);
   }
 }    
-
-var statusInterval; 
-var reply = false;
-
-async function RunSerial() {
-
-  console.log('connecting to localhost 8080');
-
-  socket = io.connect('ws://localhost:8080');
-
-  console.log('connected');
- 
-  connected_serial = true;
-  
-  statusInterval = setInterval(statusTimer, 250);
-
-  console.log('status update timer');
-
-  socket.on('led', function (data) {
-			console.log('Rx led: ' + data);
-			//document.getElementById("statusbox").value = data;
-			//document.getElementById("outputText").innerHTML = data.value;
-  });
-
-  socket.on('status', function (data) {
-			console.log('Rx status: ' + data);
-			reply = true;
-			//document.getElementById("statusbox").value = data;
-  });
-
-  socket.on('message', function (data) {
-			console.log('Rx message: ' + data);
-			//document.getElementById("statusbox").value = data;
-  });
-
-
-  socket.on('var', function (data) {
-			console.log('Rx var: ' + data);
-			//document.getElementById("inputSlider2").value = data.value;
-			//document.getElementById("outputText2").innerHTML = data.value;
-  });
-   
-  //usb_device.transferOut(endpointOut,
-  //  new TextEncoder('utf-8').encode("\n\n"));  
-  //Run2();
-  //while (true) {
-  //  var data = await usb_device.transferIn(endpointIn, 64);
-  //  OnData(data.data);
-  //}
-}    
-
-
-
-var send_state = 0;
-
-async function SocketSend(data){
-   socket.send(data);
-   console.log('Sending: ' + data);
-   //check for answer
-   var reply = false
-   console.log('Requesting status: ');
-   while (!reply){
-	 socket.emit('status',''); //alias for socket.emit('message','set_volume ', { value: newValue })
-     await sleep(50);
-   }
-}
-
-function saberStatus(newValue)
-	{
-
-			switch(send_state) {
-			  case 0:
-					SocketSend('get_preset');
-					send_state += 1;
-				break;
-			  case 1:
-					SocketSend('get_track');
-					send_state += 1;
-				break;
-			  case 2:
-					SocketSend('get_volume');
-					send_state += 1;
-				break;
-			  case 3:
-					SocketSend('battery_voltage');
-					send_state += 1;
-				break;
-			  case 4:
-					SocketSend('get_on');
-					send_state = 0;		
-				break;
-			}			
-
-			
-			//if (togle_){
-			//	socket.send('on');
-			//	togle_ =  false;
-		    //}else{
-			//	socket.send('off');
-			//	togle_ =  true;
-			//}
-	}
-
-function statusTimer() {
-  saberStatus()
-}
 
 
 var loop_running = false;
@@ -1344,10 +1224,6 @@ function Init() {
     document.getElementById('connect_ble').style.visibility='visible';
     err = false;
   }
-  //if (true) {
-  //  document.getElementById('connect_serial').style.visibility='visible';
-  //  err = false;
-  //}
   if (err) {
     document.getElementById('EMSG').innerHTML = "This browser supports neither webusb nor web bluetooth.";
   }
@@ -1361,12 +1237,9 @@ function Init() {
   <div id=connect_ble style='visibility:hidden;'>
     <span id=pwspan style='display:none'>Password:&nbsp;<input class=pwinput type=password id=password onkeydown="if (event.keyCode == 13) Run();"></span>
     <div class=control>
-      <button class=mybutton type=button onclick='Run()'>web ble</button>
+      <button class=mybutton type=button onclick='Run()'>web BLE</button>
     </div>
     <br>
-  </div>
-  <div id=connect_serial style='visibility:hidden;' class=control>
-     <button class=mybutton type=button onclick='RunSerial()'>serial</button><br>
   </div>
   <div id=EMSG></div>
 </span>
@@ -1467,4 +1340,3 @@ function Init() {
 </span>
 
 </body>
-

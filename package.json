@@ -1,27 +1,25 @@
 {
-  "name": "@serialport/terminal",
-  "version": "9.0.1",
-  "main": "lib",
-  "bin": {
-    "serialport-terminal": "./serial_app.js"
-  },
+  "name": "direct_serial_app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "json init",
+  "main": "index.js",
   "dependencies": {
-    "@serialport/bindings": "^9.0.1",
-    "@serialport/stream": "^9.0.1",
-    "commander": "^5.1.0",
-    "enquirer": "^2.3.5",
+    "commander": "^6.1.0",
+    "enquirer": "^2.3.6",
+    "express": "^4.17.1",
+    "inquirer": "^7.3.3",
+    "node-cmd": "^3.0.0",
+    "opn": "^6.0.0",
     "queue-fifo": "^0.2.6",
+    "serialport": "^9.0.1",
+    "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0"
   },
-  "engines": {
-    "node": ">=8.6.0"
+  "devDependencies": {},
+  "scripts": {
+    "test": "nodetest"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/serialport/node-serialport.git"
-  }
+  "author": "",
+  "license": "ISC"
 }

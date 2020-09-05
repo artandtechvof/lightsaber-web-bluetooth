@@ -45,7 +45,7 @@ var opn = require('opn');
 const { Select } = require('enquirer')
 const args = require('commander')
 const SerialPort = require('@serialport/stream')
-const { version } = require('./package.json')
+//const { version } = require('package.json')
 const { OutputTranslator } = require('./output-translator')
 SerialPort.Binding = require('@serialport/bindings')
 
@@ -57,7 +57,7 @@ var queue = new Queue();
 const makeNumber = input => Number(input)
 
 args
-  .version(version)
+  //.version(version)
   .usage('[options]')
   .description('A basic terminal interface for communicating over a serial port. Pressing ctrl+c exits.')
   .option('-l --list', 'List available ports then exit')
@@ -177,8 +177,19 @@ const run = async () => {
   const path = args.path || (await askForPort())
   //await createPort(path)
   serPort = createPort(path)
-  opn('./app.html');
-
+  //opn('./app.html');
+  var cmd=require('node-cmd')
+  cmd.get('pwd',
+      function(err, data, stderr){
+          console.log('the current working dir is : ',data)
+      }
+    );
+  cmd.get('http-server ./ -p 8081 -c-1 --cors',
+      function(err, data, stderr){
+          console.log('res: ',data)
+      }
+    );
+  opn('http://localhost:8081/app.html')
   await doSerial(serPort)
 }
 

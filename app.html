@@ -266,6 +266,7 @@ input[type="color"].custom {
 <meta name="msapplication-TileImage" content="icon.png">
 <meta name="msapplication-TileColor" content="#2F3BA2">
 <meta name=viewport content='width=850'>
+<script src="http://localhost:8080/socket.io/socket.io.js"></script>
 </head>
 <body onload='Init();'>
 
@@ -308,7 +309,10 @@ var style_lines;
 var named_styles = {};
 var track_string = "";
 var tracks_listed = false;
+//socket vars
+var socket;
 var has_dimblade = false;
+var connected_serial = false;
 
 function SendNext() {
   if (!current_packet) {
@@ -389,6 +393,10 @@ function RunWatchDog() {
 }
 
 function Send(cmd) {
+  if (connected_serial){
+      SocketSend(cmd);
+	  return;
+	}
   var data = new TextEncoder('utf-8').encode(cmd + '\n');
   // console.log(usb_device);
   if (usb_device) {
@@ -571,7 +579,7 @@ function SaveStyle(blade) {
   ret = ret.join(" ");
   presets[current_preset_num]["STYLE"+blade] = ret;
   Send("set_style"+blade+ " " + ret);
-  SetPreset(current_preset_num) //to make sure it takes emediate effect
+  SetPreset(current_preset_num) //to make sure it takes immediate effect
 }
 
 function SaveName() {
@@ -618,7 +626,7 @@ function SetVariation(){
 function make_variation_field(value) {
   var ret = "<div class=edit>";
   ret += "<span class=title>variation<br><br><input type=range min=0 max=32767 class=slider id=variation_slider value='"+value+"' onchange='SaveVariation()'>";
-  ret += "<br><input type=text id=variation_field class=myinput onchange='SetVariation()' value="+value+">"; 
+  ret += "<br><br><input type=text id=variation_field class=myinput onchange='SetVariation()' value="+value+">"; 
   ret += "</span></div>\n"; 
   return ret;
 }
@@ -645,12 +653,12 @@ function SaveFont() {
   var font_path = font_select.value;
   if (addon_select.value != "none"){
     font_path += ";" + addon_select.value;
-  }  
+  }
   console.log("SAVE FONT " + font_path);
   if (presets[current_preset_num].FONT != font_path) {
     presets[current_preset_num].FONT = font_path;
     Send("set_font " + font_path);
-	SetPreset(current_preset_num) //to make sure it takes immediate effect
+    SetPreset(current_preset_num) //to make sure it takes immediate effect
   }
 }
 
@@ -659,13 +667,13 @@ function make_font_field(value) {
   var font_ = value;
   var addon_ = "none"
   if (tmp.length > 1){
-	  for (var i = 0; i < font_lines.length; i++) {
-		if (tmp[0] == font_lines[i]) { font_ = tmp[0];value = tmp[1];}
-		if (tmp[1] == font_lines[i]) { font_ = tmp[1];value = tmp[0];}
-	  }
-	  for (var i = 0; i < dir_lines.length; i++) {
-		if (value == dir_lines[i]) { addon_ = value;}
-	  }
+    for (var i = 0; i < font_lines.length; i++) {
+      if (tmp[0] == font_lines[i]) { font_ = tmp[0];value = tmp[1];}
+      if (tmp[1] == font_lines[i]) { font_ = tmp[1];value = tmp[0];}
+    }
+    for (var i = 0; i < dir_lines.length; i++) {
+      if (value == dir_lines[i]) { addon_ = value;}
+    }
   }
   ret ="<div class=edit_tall><span class=title>soundfont<br><br><select class=myselect id=font_select name=font_select onchange='SaveFont()'>";
   ret += make_select(font_lines, font_);
@@ -683,7 +691,7 @@ function SaveTrack() {
   if (presets[current_preset_num].TRACK != track_select.value) {
     presets[current_preset_num].TRACK = track_select.value;
     Send("set_track " + track_select.value);
-	SetPreset(current_preset_num) //to make sure it takes immediate effect
+    SetPreset(current_preset_num); //to make sure it takes immediate effect
   }
 }
 
@@ -790,7 +798,7 @@ async function AddPreset() {
   Send("duplicate_preset " + presets.length);
   presets.push(Object.assign({}, presets[current_preset_num]));
   UpdatePresets();
-  }   
+  }
 }
 
 async function DelPreset() {
@@ -1042,7 +1050,7 @@ async function Run2() {
   document.getElementById('while_disconnected').style.visibility='hidden';  
   document.getElementById('connect_usb').style.visibility='hidden';
   document.getElementById('connect_ble').style.visibility='hidden';
-
+  document.getElementById('connect_serial').style.visibility='hidden';
   var preset;
   var preset_string;
   while (true) {
@@ -1069,7 +1077,7 @@ async function Run2() {
   DoRunLoop()
 }
 
-//WebUSB		
+//WebUSB
 async function RunUSB() {
   document.getElementById('EMSG').innerHTML = '';
   var filters = [
@@ -1127,6 +1135,111 @@ async function RunUSB() {
     OnData(data.data);
   }
 }    
+
+var statusInterval; 
+var reply = false;
+
+async function RunSerial() {
+
+  console.log('connecting to localhost 8080');
+
+  socket = io.connect('ws://localhost:8080');
+
+  console.log('connected');
+ 
+  connected_serial = true;
+  
+  statusInterval = setInterval(statusTimer, 250);
+
+  console.log('status update timer');
+
+  socket.on('led', function (data) {
+			console.log('Rx led: ' + data);
+			//document.getElementById("statusbox").value = data;
+			//document.getElementById("outputText").innerHTML = data.value;
+  });
+
+  socket.on('status', function (data) {
+			console.log('Rx status: ' + data);
+			reply = true;
+			//document.getElementById("statusbox").value = data;
+  });
+
+  socket.on('message', function (data) {
+			console.log('Rx message: ' + data);
+			//document.getElementById("statusbox").value = data;
+  });
+
+
+  socket.on('var', function (data) {
+			console.log('Rx var: ' + data);
+			//document.getElementById("inputSlider2").value = data.value;
+			//document.getElementById("outputText2").innerHTML = data.value;
+  });
+   
+  //usb_device.transferOut(endpointOut,
+  //  new TextEncoder('utf-8').encode("\n\n"));  
+  //Run2();
+  //while (true) {
+  //  var data = await usb_device.transferIn(endpointIn, 64);
+  //  OnData(data.data);
+  //}
+}    
+
+
+var send_state = 0;
+
+async function SocketSend(data){
+   socket.send(data);
+   console.log('Sending: ' + data);
+   //check for answer
+   var reply = false
+   console.log('Requesting status: ');
+   while (!reply){
+	 socket.emit('status',''); //alias for socket.emit('message','set_volume ', { value: newValue })
+     await sleep(50);
+   }
+}
+
+function saberStatus(newValue)
+	{
+
+			switch(send_state) {
+			  case 0:
+					SocketSend('get_preset');
+					send_state += 1;
+				break;
+			  case 1:
+					SocketSend('get_track');
+					send_state += 1;
+				break;
+			  case 2:
+					SocketSend('get_volume');
+					send_state += 1;
+				break;
+			  case 3:
+					SocketSend('battery_voltage');
+					send_state += 1;
+				break;
+			  case 4:
+					SocketSend('get_on');
+					send_state = 0;		
+				break;
+			}			
+
+			
+			//if (togle_){
+			//	socket.send('on');
+			//	togle_ =  false;
+		    //}else{
+			//	socket.send('off');
+			//	togle_ =  true;
+			//}
+	}
+
+function statusTimer() {
+  saberStatus()
+}
 
 
 var loop_running = false;
@@ -1187,10 +1300,7 @@ async function Loop() {
     // Listing tracks tends to interrupt whatever is currently playing so
     // let's wait until the saber is off and not playing a track before
     // we fetch the list of tracks.
-
     if (tracks_listed == false && parseInt(on) == 0 && current_track == "") {
-    //if (tracks_listed == false && current_track == "") {
-    //if (true) {
       tracks_listed = true;
       track_lines = await GetList("list_tracks");
       track_string = "";
@@ -1264,6 +1374,10 @@ function Init() {
     document.getElementById('connect_ble').style.visibility='visible';
     err = false;
   }
+  if (true) {
+    document.getElementById('connect_serial').style.visibility='visible';
+    err = false;
+  }
   if (err) {
     document.getElementById('EMSG').innerHTML = "This browser supports neither webusb nor web bluetooth.";
   }
@@ -1280,6 +1394,10 @@ function Init() {
       <button class=mybutton type=button onclick='Run()'>web BLE</button>
     </div>
     <br>
+  </div>
+
+  <div id=connect_serial style='visibility:hidden;' class=control>
+     <button class=mybutton type=button onclick='RunSerial()'>serial</button><br>
   </div>
   <div id=EMSG></div>
 </span>

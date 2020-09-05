@@ -1,0 +1,54 @@
+Modification to Web USB App
+
+Main menu;
+
+Branch 
+  new buttons Added buttons for stab, melt and lightning block
+
+branch slider style
+ Added different style for volume slider, making it easiear to use on smaller mobile devices 
+
+branch edit_variation
+ Added slider and input field for variation (lets fine tune your color, and also lest you reset a preset that has its varition set to non-zero)
+
+branch track_highlight_fix
+ Fixed highligting of playing track
+
+Edit menu;
+
+branch edit_update
+ After edit field has modified an item, send Setpreset(current_preset_num) to reselect current preset and let it take emidiate effect.
+
+branch edit_add_delete_confirm
+ Drag and drop delete does not work on chrome on windows PC, Click on delete preset button now also deletes preset. 
+ Duplicating and deleting a preset has to be confirmed first via alert message.
+
+branch bugfix_delete
+ Reset to 1st preset [0] after deletion, preset sometimes goes to -1
+
+Branch font_searchpath
+ Made addon folder selection option for sound fonts, for common menu sounds etc.
+ Changed order of edit-menu items to better fit the new font + addon selection box
+
+branch edit_track_selection;
+  changed myselect style to center items if highlighted textbox
+
+branch dim_blade
+  option for dimable blade via web-app.git Button will not show when OS doen not have this option enabled.
+
+
+
+
+
+
+To use it locally wihtout internet connection
+
+Install node.js http server
+npm install --global http-server
+
+and go to folder where app is
+cmd;
+http-server ./ -c-1 --cors
+
+now browse to 
+http://localhost:8080/app.html inb chrome, and WebUSB should also work (WbeBLE works also when just opening the HTML file in a chrome browser)
